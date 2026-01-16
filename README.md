@@ -1,6 +1,3 @@
-# Q-SERVE
-iNTEGRATED
-
 # Q-Serve Smart Queue & Appointment System
 
 This project includes:
