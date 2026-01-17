@@ -35,7 +35,7 @@ body {
   justify-content: center;
   align-items: center;
   color: var(--text);
-  padding-top: 60px; /* 🔴 space for banner */
+  padding-top: 60px;
 }
 
 @keyframes bgMove {
@@ -44,39 +44,32 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* 🔴 NOW SERVING BANNER */
+/* NOW SERVING */
 #nowServing {
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
   background: linear-gradient(135deg,#00c853,#69f0ae);
   color: #fff;
-  text-align: center;
   padding: 12px;
   font-weight: 600;
-  font-size: 16px;
+  text-align: center;
   z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 /* Theme Toggle */
 .theme-toggle {
   position: fixed;
-  bottom: 25px;   /* ⬇ moved from top */
+  bottom: 25px;
   right: 25px;
   background: var(--glass);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
   padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-  z-index: 10000; /* ⬆ above Now Serving banner */
+  z-index: 10000;
 }
 
-
-/* Login Card */
+/* Card */
 .card {
   width: 380px;
   padding: 35px;
@@ -103,9 +96,6 @@ body {
   margin-bottom: 18px;
   border-radius: 10px;
   border: 1px solid #ddd;
-  outline: none;
-  background: #fff;
-  color: #333;
 }
 
 body.dark .input {
@@ -114,9 +104,6 @@ body.dark .input {
   color: #fff;
 }
 
-.input::placeholder { color: #777; }
-body.dark .input::placeholder { color: rgba(255,255,255,0.6); }
-
 button {
   width: 100%;
   padding: 14px;
@@ -124,8 +111,8 @@ button {
   border: none;
   background: linear-gradient(135deg,#00c853,#69f0ae);
   font-weight: 600;
-  cursor: pointer;
   color: #fff;
+  cursor: pointer;
 }
 
 .links {
@@ -135,21 +122,15 @@ button {
   font-size: 13px;
 }
 
-.links a { color: #00796b; text-decoration: none; }
-
-.loader { display:none; text-align:center; margin-top:15px; }
+.links a {
+  color: #00796b;
+  text-decoration: none;
+}
 
 .footer {
   margin-top: 35px;
   font-size: 13px;
-  opacity: 0.8;
   text-align: center;
-}
-
-.footer a {
-  color: #00796b;
-  margin: 0 12px;
-  text-decoration: none;
 }
 
 .toast {
@@ -159,17 +140,17 @@ button {
   background: rgba(0,0,0,0.85);
   padding: 14px 20px;
   border-radius: 10px;
+  color: #fff;
   opacity: 0;
   transition: 0.4s;
-  color: #fff;
 }
+
 .toast.show { opacity: 1; }
 </style>
 </head>
 
 <body>
 
-<!-- 🔴 NOW SERVING HTML -->
 <div id="nowServing">
   Now Serving: <span id="currentToken">Loading...</span>
 </div>
@@ -184,12 +165,9 @@ button {
   <input id="password" class="input" type="password" placeholder="Password">
 
   <button onclick="login()">Login</button>
-  <div style="text-align:center; margin-top:12px; font-size:13px;">
-  <a href="Forgot_Password.html" style="color:#00796b; text-decoration:none;">Forgot Password?</a>
-  </div>
 
-  <div class="loader" id="loader">
-    <span></span><span></span><span></span>
+  <div style="text-align:center; margin-top:12px; font-size:13px;">
+    <a href="#" onclick="resetPassword()" style="color:#00796b;">Forgot Password?</a>
   </div>
 
   <div class="links">
@@ -206,10 +184,13 @@ button {
 
 <div class="toast" id="toast"></div>
 
-<!-- 🔒 EXISTING AUTH SCRIPT (UNCHANGED) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, onValue } from
 "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
@@ -224,36 +205,42 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* 🔴 NOW SERVING LOGIC */
+/* NOW SERVING */
 const db = getDatabase(app);
-const tokenRef = ref(db, "queue/currentToken");
-
-onValue(tokenRef, snap => {
+onValue(ref(db,"queue/currentToken"), snap => {
   const n = snap.val() ?? 0;
-  document.getElementById("currentToken").innerText =
-    "Q-" + String(n).padStart(3, "0");
+  currentToken.innerText = "Q-" + String(n).padStart(3,"0");
 });
 
-/* EXISTING LOGIN */
+/* LOGIN */
 window.login = function () {
-  loader.style.display = "block";
-
   signInWithEmailAndPassword(auth, email.value, password.value)
     .then(() => {
-      localStorage.setItem("studentEmail", email.value);
       showToast("Login Successful ✔");
       setTimeout(()=>location.href="student.html",1200);
     })
-    .catch(err => {
-      loader.style.display = "none";
-      showToast(err.message);
-    });
+    .catch(e => showToast(e.message));
+};
+
+/* FORGOT PASSWORD */
+window.resetPassword = function () {
+  if (!email.value) {
+    showToast("Enter email to reset password");
+    return;
+  }
+
+  sendPasswordResetEmail(auth, email.value)
+    .then(() => showToast("Reset link sent to your email 📩"))
+    .catch(e => showToast(e.message));
 };
 </script>
 
 <script>
-function toggleTheme(){ document.body.classList.toggle("dark"); }
-function showToast(msg){
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+function showToast(msg) {
   toast.innerText = msg;
   toast.classList.add("show");
   setTimeout(()=>toast.classList.remove("show"),3000);
